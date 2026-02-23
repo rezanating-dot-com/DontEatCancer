@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
 from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
 from app.schemas import EvidenceOut, FetchRequest, IngredientSummary, ProcessingJobOut
+from app.services.ingredient_service import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +161,11 @@ def _run_fetch_processing(job_id: int, ingredient: str, sources: list[str], max_
                     continue
 
             extraction = process_paper(record)
+
+            if not extraction.is_food_safety_relevant:
+                logger.info("Skipped irrelevant paper: %s", record.get("title", "")[:80])
+                continue
+
             flagged = should_flag_for_review(extraction)
 
             evidence = Evidence(
@@ -188,7 +194,7 @@ def _run_fetch_processing(job_id: int, ingredient: str, sources: list[str], max_
             db.flush()
 
             for ing_found in extraction.ingredients_found:
-                slug = ing_found.name.lower().replace(" ", "-")
+                slug = slugify(ing_found.name)
                 ingredient_obj = db.query(Ingredient).filter(Ingredient.slug == slug).first()
                 if not ingredient_obj:
                     ingredient_obj = Ingredient(canonical_name=ing_found.name, slug=slug, evidence_count=0)

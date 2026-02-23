@@ -81,6 +81,7 @@ def process(
 
     from app.database import SessionLocal
     from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
+    from app.services.ingredient_service import slugify
     from pipeline.ai_processor import process_paper, should_flag_for_review
     from pipeline.ris_parser import parse_ris_file
 
@@ -109,6 +110,11 @@ def process(
         typer.echo(f"[{i}/{len(records)}] Processing: {record['title'][:60]}...")
         try:
             extraction = process_paper(record)
+
+            if not extraction.is_food_safety_relevant:
+                typer.echo("  Skipped (not relevant to food safety)")
+                continue
+
             flagged = should_flag_for_review(extraction)
 
             # Check for duplicate DOI
@@ -142,7 +148,7 @@ def process(
 
             # Link to ingredients
             for ing_found in extraction.ingredients_found:
-                slug = ing_found.name.lower().replace(" ", "-")
+                slug = slugify(ing_found.name)
                 ingredient = db.query(Ingredient).filter(Ingredient.slug == slug).first()
                 if not ingredient:
                     ingredient = Ingredient(
@@ -234,6 +240,7 @@ def fetch(
 
     from app.database import SessionLocal
     from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
+    from app.services.ingredient_service import slugify
     from pipeline.ai_processor import process_paper, should_flag_for_review
 
     db: Session = SessionLocal()
@@ -256,6 +263,11 @@ def fetch(
                     continue
 
             extraction = process_paper(record)
+
+            if not extraction.is_food_safety_relevant:
+                typer.echo("  Skipped (not relevant to food safety)")
+                continue
+
             flagged = should_flag_for_review(extraction)
 
             evidence = Evidence(
@@ -281,7 +293,7 @@ def fetch(
             db.flush()
 
             for ing_found in extraction.ingredients_found:
-                slug = ing_found.name.lower().replace(" ", "-")
+                slug = slugify(ing_found.name)
                 ingredient_obj = db.query(Ingredient).filter(Ingredient.slug == slug).first()
                 if not ingredient_obj:
                     ingredient_obj = Ingredient(

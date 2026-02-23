@@ -29,11 +29,11 @@ class ScopusFetcher:
         if not self.api_key:
             raise ValueError("Scopus API key is required")
 
-        # Wrap in TITLE-ABS-KEY if not already formatted
+        # Wrap in TITLE-ABS-KEY if not already formatted, and filter for open access
         if not query.strip().startswith("TITLE-ABS-KEY"):
-            scopus_query = f"TITLE-ABS-KEY({query})"
+            scopus_query = f"TITLE-ABS-KEY({query}) AND OPENACCESS(1)"
         else:
-            scopus_query = query
+            scopus_query = f"{query} AND OPENACCESS(1)"
 
         records = []
         count = 25  # Scopus default page size

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
 from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
 from app.schemas import ProcessingJobOut
+from app.services.ingredient_service import slugify
 
 router = APIRouter(tags=["processing"])
 
@@ -74,6 +75,11 @@ def _run_processing(job_id: int):
     for record in records:
         try:
             extraction = process_paper(record)
+
+            if not extraction.is_food_safety_relevant:
+                logger.info("Skipped irrelevant paper: %s", record.get("title", "")[:80])
+                continue
+
             flagged = should_flag_for_review(extraction)
 
             if record.get("doi"):
@@ -107,7 +113,7 @@ def _run_processing(job_id: int):
             db.flush()
 
             for ing_found in extraction.ingredients_found:
-                slug = ing_found.name.lower().replace(" ", "-")
+                slug = slugify(ing_found.name)
                 ingredient = db.query(Ingredient).filter(Ingredient.slug == slug).first()
                 if not ingredient:
                     ingredient = Ingredient(canonical_name=ing_found.name, slug=slug, evidence_count=0)

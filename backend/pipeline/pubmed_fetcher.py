@@ -44,10 +44,12 @@ class PubMedFetcher:
         Uses ESearch with usehistory=y, then EFetch in batches of 100.
         """
         # Step 1: ESearch to get WebEnv + QueryKey
+        # Filter for free full text to avoid paywalled papers
+        oa_query = f"({query}) AND free full text[filter]"
         search_params = {
             **self._base_params(),
             "db": "pubmed",
-            "term": query,
+            "term": oa_query,
             "retmax": 0,  # We just want the count + WebEnv
             "usehistory": "y",
         }
@@ -161,8 +163,14 @@ class PubMedFetcher:
                     doi = normalize_doi(eloc.text)
                     break
 
-        # PMID
+        # PMID and PMC ID
         pmid = medline.findtext("PMID", "")
+        pmc_id = None
+        if article_data is not None:
+            for aid in article_data.iter("ArticleId"):
+                if aid.get("IdType") == "pmc":
+                    pmc_id = aid.text
+                    break
 
         # Journal
         journal_el = art.find("Journal")
@@ -202,10 +210,15 @@ class PubMedFetcher:
             if desc:
                 keywords.append(desc)
 
-        # URL
-        url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else None
-        if not url and doi:
+        # URL — prefer PMC full-text link over abstract-only PubMed page
+        if pmc_id:
+            url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmc_id}/"
+        elif pmid:
+            url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+        elif doi:
             url = f"https://doi.org/{doi}"
+        else:
+            url = None
 
         return {
             "title": title,

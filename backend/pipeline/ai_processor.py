@@ -7,7 +7,9 @@ from pydantic import BaseModel
 
 from app.config import settings
 
-EXTRACTION_PROMPT = """You are analyzing a scientific paper about food ingredients/additives and their health effects.
+EXTRACTION_PROMPT = """You are analyzing a scientific paper to determine if it is about food ingredients/additives and their health effects (especially cancer risk).
+
+FIRST: Decide if this paper is relevant. A paper is relevant ONLY if it studies the health or safety effects of a substance that humans consume as a food ingredient, food additive, or food contaminant. Papers about pharmaceuticals, surgical procedures, non-food industrial chemicals, or topics unrelated to food safety are NOT relevant.
 
 Given the paper information below, extract structured data. If the paper is not in English, translate the title and abstract to English.
 
@@ -20,6 +22,7 @@ Year: {year}
 Keywords: {keywords}
 
 Return a JSON object with these fields:
+- "is_food_safety_relevant": true if the paper is about a food ingredient/additive/contaminant and its health effects, false otherwise. If false, you may leave other fields minimal.
 - "original_language": ISO 639-1 code (e.g., "en", "zh", "ar", "fr", "de")
 - "title_english": English translation of the title (or original if already English)
 - "abstract_english": English translation of the abstract (or original if already English)
@@ -45,6 +48,7 @@ class IngredientFound(BaseModel):
 
 
 class PaperExtraction(BaseModel):
+    is_food_safety_relevant: bool = True
     original_language: str
     title_english: str
     abstract_english: str | None

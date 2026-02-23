@@ -35,7 +35,7 @@ class OpenAlexFetcher:
         with httpx.Client(timeout=30, headers=headers) as client:
             while len(records) < max_results:
                 params: dict = {
-                    "filter": f"title_and_abstract.search:{query}",
+                    "filter": f"title_and_abstract.search:{query},is_oa:true",
                     "per_page": min(per_page, max_results - len(records)),
                     "page": page,
                 }
@@ -109,8 +109,10 @@ class OpenAlexFetcher:
             if name and score > 0.5:
                 keywords.append(name)
 
-        # URL
-        url = work.get("doi") or primary_location.get("landing_page_url")
+        # URL — prefer open-access URL for direct full-text access
+        oa = work.get("open_access") or {}
+        oa_url = oa.get("oa_url")
+        url = oa_url or primary_location.get("landing_page_url") or work.get("doi")
 
         return {
             "title": title.strip(),
