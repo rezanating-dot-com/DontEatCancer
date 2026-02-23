@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import EvidenceCard from "@/components/EvidenceCard";
 import SearchBar from "@/components/SearchBar";
-import { getCategories, getStats } from "@/lib/api";
-import type { Stats } from "@/lib/types";
+import { getCategories, getEvidence, getStats } from "@/lib/api";
+import type { Evidence, Stats } from "@/lib/types";
 
 const CATEGORY_COLORS: Record<string, string> = {
   preservative: "bg-red-50 border-red-200 text-red-700",
@@ -19,10 +20,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [recentEvidence, setRecentEvidence] = useState<Evidence[]>([]);
 
   useEffect(() => {
     getStats().then(setStats).catch(() => {});
     getCategories().then(setCategories).catch(() => {});
+    getEvidence({ limit: 5 }).then(setRecentEvidence).catch(() => {});
   }, []);
 
   return (
@@ -68,6 +71,22 @@ export default function Home() {
               >
                 {cat}
               </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recentEvidence.length > 0 && (
+        <div className="w-full max-w-3xl">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-700">Recently Added</h2>
+            <Link href="/evidence" className="text-sm text-blue-600 hover:text-blue-800">
+              View all &rarr;
+            </Link>
+          </div>
+          <div className="flex flex-col gap-3">
+            {recentEvidence.map((ev) => (
+              <EvidenceCard key={ev.id} evidence={ev} />
             ))}
           </div>
         </div>
