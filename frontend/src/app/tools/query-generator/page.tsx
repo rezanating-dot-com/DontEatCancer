@@ -60,7 +60,7 @@ export default function QueryGeneratorPage() {
           <select
             value={database}
             onChange={(e) => setDatabase(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg"
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg"
           >
             <option value="ebsco">EBSCO</option>
             <option value="scopus">Scopus</option>
@@ -71,7 +71,7 @@ export default function QueryGeneratorPage() {
         <button
           type="submit"
           disabled={loading || !ingredient.trim()}
-          className="self-start px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Generating..." : "Generate Queries"}
         </button>
@@ -90,7 +90,7 @@ export default function QueryGeneratorPage() {
                 </span>
                 <button
                   onClick={() => handleCopy(lang, query)}
-                  className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
+                  className="text-sm px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded"
                 >
                   {copied === lang ? "Copied!" : "Copy"}
                 </button>

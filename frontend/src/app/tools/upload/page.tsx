@@ -89,7 +89,7 @@ export default function UploadPage() {
         </p>
       </div>
 
-      <div className="mb-6 p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg text-center">
+      <div className="mb-6 p-4 sm:p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg text-center">
         <input
           type="file"
           accept=".ris"
@@ -106,7 +106,7 @@ export default function UploadPage() {
         </label>
       </div>
 
-      <div className="mb-8 p-6 bg-white border border-gray-200 rounded-lg">
+      <div className="mb-8 p-4 sm:p-6 bg-white border border-gray-200 rounded-lg">
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Paste paper text</h2>
         <textarea
           value={pasteText}
@@ -138,9 +138,9 @@ export default function UploadPage() {
         <div className="space-y-3">
           {jobs.map((job) => (
             <div key={job.id} className="p-4 bg-white border border-gray-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">{job.filename}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{job.filename}</p>
                   <p className="text-sm text-gray-500">
                     {job.total_records} records
                     {job.processed_count > 0 && ` — ${job.processed_count} processed`}
@@ -148,14 +148,14 @@ export default function UploadPage() {
                     {job.flagged_count > 0 && `, ${job.flagged_count} flagged`}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                   <span className={`text-sm font-medium capitalize ${statusColor(job.status)}`}>
                     {job.status}
                   </span>
                   {job.status === "pending" && (
                     <button
                       onClick={() => handleStart(job.id)}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
                       Start
                     </button>

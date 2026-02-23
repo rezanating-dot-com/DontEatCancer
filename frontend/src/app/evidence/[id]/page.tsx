@@ -42,7 +42,7 @@ export default function EvidenceDetailPage({
 
   return (
     <div className="max-w-4xl">
-      <button onClick={() => router.back()} className="text-sm text-blue-600 hover:underline mb-4">
+      <button onClick={() => router.back()} className="text-sm text-blue-600 hover:underline mb-4 py-1">
         &larr; Back
       </button>
 
@@ -56,7 +56,7 @@ export default function EvidenceDetailPage({
         </div>
       )}
 
-      <h1 className="text-2xl font-bold text-gray-900 leading-tight">{evidence.title}</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{evidence.title}</h1>
 
       {evidence.authors && evidence.authors.length > 0 && (
         <p className="mt-2 text-sm text-gray-500">{evidence.authors.join(", ")}</p>
@@ -73,7 +73,7 @@ export default function EvidenceDetailPage({
         </a>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
         <RiskBadge level={evidence.risk_level} />
         {direction && (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${direction.color}`}>
@@ -97,7 +97,7 @@ export default function EvidenceDetailPage({
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
         {evidence.journal && <span>{evidence.journal}</span>}
         {evidence.publication_year && <span>{evidence.publication_year}</span>}
         {evidence.original_language && evidence.original_language !== "en" && (

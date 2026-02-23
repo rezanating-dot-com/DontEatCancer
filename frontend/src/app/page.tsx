@@ -29,10 +29,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-12 py-12">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900">DontEatCancer</h1>
-        <p className="mt-3 text-lg text-gray-500 max-w-xl">
+    <div className="flex flex-col items-center gap-8 sm:gap-12 py-6 sm:py-12">
+      <div className="text-center px-2">
+        <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">DontEatCancer</h1>
+        <p className="mt-3 text-base sm:text-lg text-gray-500 max-w-xl">
           Research repository aggregating scientific evidence on food chemicals and cancer risk
           from Chinese, Middle Eastern, and European sources.
         </p>
@@ -41,17 +41,17 @@ export default function Home() {
       <SearchBar />
 
       {stats && (
-        <div className="flex gap-8 text-center">
+        <div className="flex gap-6 sm:gap-8 text-center">
           <div>
-            <p className="text-3xl font-bold text-gray-900">{stats.ingredient_count}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.ingredient_count}</p>
             <p className="text-sm text-gray-500">Ingredients</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-gray-900">{stats.evidence_count}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.evidence_count}</p>
             <p className="text-sm text-gray-500">Papers</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-amber-600">{stats.review_count}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600">{stats.review_count}</p>
             <p className="text-sm text-gray-500">Needs Review</p>
           </div>
         </div>

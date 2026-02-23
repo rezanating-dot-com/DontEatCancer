@@ -40,11 +40,11 @@ export default function IngredientDetailPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <div className="flex items-start justify-between gap-4">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{ingredient.canonical_name}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{ingredient.canonical_name}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-gray-500">
               {ingredient.e_number && <span className="px-2 py-0.5 bg-gray-100 rounded">{ingredient.e_number}</span>}
               {ingredient.cas_number && <span>CAS: {ingredient.cas_number}</span>}
               {ingredient.category && <span className="capitalize">{ingredient.category}</span>}
