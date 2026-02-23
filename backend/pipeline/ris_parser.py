@@ -100,11 +100,19 @@ def parse_ris_file(filepath: str | Path) -> list[dict]:
         if doi and not re.match(r"10\.\d{4,}", doi):
             doi = None
 
+        # Extract URL from RIS entry; fall back to DOI link
+        url = entry.get("url") or entry.get("file_attachments1") or entry.get("link") or None
+        if isinstance(url, list):
+            url = url[0] if url else None
+        if not url and doi:
+            url = f"https://doi.org/{doi}"
+
         record = {
             "title": title.strip(),
             "abstract": _extract_abstract(entry),
             "authors": _extract_authors(entry),
             "doi": doi,
+            "url": url,
             "journal": (entry.get("journal_name") or entry.get("secondary_title") or entry.get("alternate_title3") or "").strip() or None,
             "year": _extract_year(entry),
             "keywords": entry.get("keywords") or [],

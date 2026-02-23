@@ -26,6 +26,9 @@ class Evidence(Base):
     risk_direction: Mapped[str | None] = mapped_column(String(20))  # increases, decreases, neutral, inconclusive
     confidence_score: Mapped[float | None] = mapped_column(Float)
     conflict_of_interest: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String(2000))
+    full_text: Mapped[str | None] = mapped_column(Text)
+    plain_language_summary: Mapped[str | None] = mapped_column(Text)
     needs_review: Mapped[bool] = mapped_column(default=False)
     ris_raw: Mapped[dict | None] = mapped_column(JSON)
     processing_status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, processed, failed, reviewed

@@ -61,9 +61,11 @@ export default function EvidenceCard({
         </div>
       </div>
 
-      {evidence.findings_summary && (
+      {evidence.plain_language_summary ? (
+        <p className="mt-3 text-sm text-green-700 line-clamp-2">{evidence.plain_language_summary}</p>
+      ) : evidence.findings_summary ? (
         <p className="mt-3 text-sm text-gray-600 line-clamp-2">{evidence.findings_summary}</p>
-      )}
+      ) : null}
 
       <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
         {evidence.original_language && evidence.original_language !== "en" && (

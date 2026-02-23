@@ -37,12 +37,15 @@ export interface Evidence {
   risk_direction: string | null;
   confidence_score: number | null;
   conflict_of_interest: string | null;
+  url: string | null;
+  plain_language_summary: string | null;
   needs_review: boolean;
   processing_status: string;
   created_at: string;
 }
 
 export interface EvidenceDetail extends Evidence {
+  full_text: string | null;
   ingredients: { name: string; slug: string; relevance: string }[];
 }
 

@@ -97,6 +97,8 @@ def _run_processing(job_id: int):
                 risk_direction=extraction.risk_direction,
                 confidence_score=extraction.confidence_score,
                 conflict_of_interest=extraction.conflict_of_interest,
+                url=record.get("url") or (f"https://doi.org/{record['doi']}" if record.get("doi") else None),
+                plain_language_summary=extraction.plain_language_summary,
                 needs_review=flagged,
                 ris_raw=record.get("ris_raw"),
                 processing_status="processed",

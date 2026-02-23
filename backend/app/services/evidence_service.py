@@ -52,6 +52,12 @@ def submit_review(db: Session, evidence_id: int, review: EvidenceReview) -> Evid
         evidence.risk_direction = review.risk_direction
     if review.findings_summary is not None:
         evidence.findings_summary = review.findings_summary
+    if review.plain_language_summary is not None:
+        evidence.plain_language_summary = review.plain_language_summary
+    if review.url is not None:
+        evidence.url = review.url
+    if review.full_text is not None:
+        evidence.full_text = review.full_text
     evidence.needs_review = review.needs_review
     evidence.processing_status = "reviewed"
     db.commit()

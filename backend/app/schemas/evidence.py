@@ -19,6 +19,9 @@ class EvidenceOut(BaseModel):
     risk_direction: str | None
     confidence_score: float | None
     conflict_of_interest: str | None
+    url: str | None
+    full_text: str | None
+    plain_language_summary: str | None
     needs_review: bool
     processing_status: str
     created_at: datetime
@@ -30,6 +33,9 @@ class EvidenceReview(BaseModel):
     risk_level: str | None = None
     risk_direction: str | None = None
     findings_summary: str | None = None
+    plain_language_summary: str | None = None
+    url: str | None = None
+    full_text: str | None = None
     needs_review: bool = False
 
 

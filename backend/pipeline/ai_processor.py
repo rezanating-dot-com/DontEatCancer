@@ -31,6 +31,7 @@ Return a JSON object with these fields:
 - "risk_level": overall risk assessment: "safe", "low", "moderate", "high", or "insufficient"
 - "risk_direction": "increases" (increases cancer/health risk), "decreases" (protective), "neutral", or "inconclusive"
 - "conflict_of_interest": a plain-English summary of any conflicts of interest disclosed by the authors (e.g., "Funded by Coca-Cola", "Lead author consults for food additive manufacturer"). If none disclosed or not mentioned, use null.
+- "plain_language_summary": 1-2 sentences explaining what this study means for an average person's health in simple, non-technical language. Focus on practical takeaways (e.g., "This study suggests eating large amounts of X may slightly increase cancer risk, but the evidence is not strong enough to draw firm conclusions.")
 - "confidence_score": your confidence in this extraction from 0.0 to 1.0
 
 If the paper has no abstract, set confidence_score to at most 0.5.
@@ -53,6 +54,7 @@ class PaperExtraction(BaseModel):
     risk_level: str | None
     risk_direction: str | None
     conflict_of_interest: str | None = None
+    plain_language_summary: str | None = None
     confidence_score: float
 
 

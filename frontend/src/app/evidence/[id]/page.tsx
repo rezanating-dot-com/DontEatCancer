@@ -24,6 +24,7 @@ export default function EvidenceDetailPage({
   const router = useRouter();
   const [evidence, setEvidence] = useState<EvidenceDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fullTextOpen, setFullTextOpen] = useState(false);
 
   useEffect(() => {
     getEvidenceById(Number(id))
@@ -37,6 +38,7 @@ export default function EvidenceDetailPage({
 
   const hasCOI = !!evidence.conflict_of_interest;
   const direction = evidence.risk_direction ? DIRECTION_LABELS[evidence.risk_direction] : null;
+  const studyUrl = evidence.url || (evidence.doi ? `https://doi.org/${evidence.doi}` : null);
 
   return (
     <div className="max-w-4xl">
@@ -58,6 +60,17 @@ export default function EvidenceDetailPage({
 
       {evidence.authors && evidence.authors.length > 0 && (
         <p className="mt-2 text-sm text-gray-500">{evidence.authors.join(", ")}</p>
+      )}
+
+      {studyUrl && (
+        <a
+          href={studyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          View Full Study &rarr;
+        </a>
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -121,9 +134,16 @@ export default function EvidenceDetailPage({
         </div>
       )}
 
+      {evidence.plain_language_summary && (
+        <div className="mt-6 px-4 py-4 bg-green-50 border border-green-200 rounded-lg">
+          <h2 className="text-sm font-semibold text-green-800 uppercase tracking-wide mb-2">What This Means for Your Health</h2>
+          <p className="text-green-800 leading-relaxed">{evidence.plain_language_summary}</p>
+        </div>
+      )}
+
       {evidence.findings_summary && (
         <div className="mt-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Findings Summary</h2>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Technical Summary</h2>
           <p className="text-gray-700 leading-relaxed">{evidence.findings_summary}</p>
         </div>
       )}
@@ -132,6 +152,23 @@ export default function EvidenceDetailPage({
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Abstract</h2>
           <p className="text-gray-700 leading-relaxed text-sm">{evidence.abstract_english}</p>
+        </div>
+      )}
+
+      {evidence.full_text && (
+        <div className="mt-6">
+          <button
+            onClick={() => setFullTextOpen(!fullTextOpen)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
+          >
+            <span className={`transition-transform ${fullTextOpen ? "rotate-90" : ""}`}>&#9654;</span>
+            Full Text
+          </button>
+          {fullTextOpen && (
+            <div className="mt-2 max-h-[600px] overflow-y-auto p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">{evidence.full_text}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
