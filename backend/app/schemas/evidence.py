@@ -44,6 +44,12 @@ class ResultIngredient(BaseModel):
     slug: str
 
 
+class FetchRequest(BaseModel):
+    ingredient: str
+    sources: list[str] = ["pubmed", "openalex", "scopus"]
+    max_per_source: int = 50
+
+
 class ProcessingJobOut(BaseModel):
     id: int
     filename: str

@@ -5,4 +5,4 @@ from app.schemas.ingredient import (  # noqa: F401
     IngredientDetail,
     IngredientSummary,
 )
-from app.schemas.evidence import EvidenceOut, EvidenceReview, ProcessingJobOut  # noqa: F401
+from app.schemas.evidence import EvidenceOut, EvidenceReview, FetchRequest, ProcessingJobOut  # noqa: F401

@@ -2,8 +2,6 @@
 
 import json
 
-import anthropic
-
 from app.config import settings
 
 # Known translations for common food additives
@@ -47,6 +45,8 @@ def _health_boolean(lang: str) -> str:
 
 def _translate_via_claude(ingredient: str) -> dict[str, str]:
     """Use Claude to translate an ingredient name into zh, ar, fr, de."""
+    import anthropic
+
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     response = client.messages.create(
         model="claude-sonnet-4-20250514",

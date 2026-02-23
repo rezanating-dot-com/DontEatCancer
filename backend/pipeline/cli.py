@@ -184,5 +184,143 @@ def process(
     typer.echo(f"\nDone! Processed: {job.processed_count}, Failed: {job.failed_count}, Flagged: {job.flagged_count}")
 
 
+@app.command()
+def fetch(
+    ingredient: str = typer.Argument(help="Ingredient name to search for"),
+    source: list[str] = typer.Option(
+        ["pubmed", "openalex", "scopus"],
+        "--source",
+        help="Sources to fetch from (repeat for multiple)",
+    ),
+    limit: int = typer.Option(50, "--limit", help="Max results per source"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Fetch and display only, don't process or save"),
+):
+    """Fetch papers from academic APIs (PubMed, OpenAlex, Scopus)."""
+    from app.routers.search import _fetch_records
+
+    typer.echo(f"Fetching papers for: {ingredient}")
+    typer.echo(f"Sources: {', '.join(source)}")
+    typer.echo(f"Max per source: {limit}\n")
+
+    try:
+        records = _fetch_records(ingredient, source, limit)
+    except Exception as e:
+        typer.echo(f"Error fetching records: {e}", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Fetched {len(records)} unique records\n")
+
+    if not records:
+        typer.echo("No results found.")
+        return
+
+    if dry_run:
+        typer.echo("Dry run — showing fetched records:\n")
+        for i, r in enumerate(records, 1):
+            typer.echo(f"  {i}. [{r.get('source_database', '?')}] {r['title'][:80]}")
+            if r.get("doi"):
+                typer.echo(f"     DOI: {r['doi']}")
+            if r.get("year"):
+                typer.echo(f"     Year: {r['year']}")
+            if r.get("authors"):
+                typer.echo(f"     Authors: {', '.join(r['authors'][:3])}{'...' if len(r['authors']) > 3 else ''}")
+            typer.echo()
+        return
+
+    # Full processing pipeline
+    from datetime import datetime, timezone
+
+    from sqlalchemy.orm import Session
+
+    from app.database import SessionLocal
+    from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
+    from pipeline.ai_processor import process_paper, should_flag_for_review
+
+    db: Session = SessionLocal()
+    job = ProcessingJob(
+        filename=f"fetch:{ingredient}",
+        status="processing",
+        total_records=len(records),
+    )
+    db.add(job)
+    db.commit()
+
+    for i, record in enumerate(records, 1):
+        typer.echo(f"[{i}/{len(records)}] Processing: {record['title'][:60]}...")
+        try:
+            # Skip duplicates by DOI
+            if record.get("doi"):
+                existing = db.query(Evidence).filter(Evidence.doi == record["doi"]).first()
+                if existing:
+                    typer.echo(f"  Skipped (duplicate DOI: {record['doi']})")
+                    continue
+
+            extraction = process_paper(record)
+            flagged = should_flag_for_review(extraction)
+
+            evidence = Evidence(
+                title=extraction.title_english,
+                abstract_original=record.get("abstract"),
+                abstract_english=extraction.abstract_english,
+                authors=record.get("authors"),
+                doi=record.get("doi"),
+                journal=record.get("journal"),
+                publication_year=record.get("year"),
+                original_language=extraction.original_language,
+                source_database=record.get("source_database"),
+                study_type=extraction.study_type,
+                findings_summary=extraction.findings_summary,
+                risk_level=extraction.risk_level,
+                risk_direction=extraction.risk_direction,
+                confidence_score=extraction.confidence_score,
+                needs_review=flagged,
+                ris_raw=record.get("ris_raw"),
+                processing_status="processed",
+            )
+            db.add(evidence)
+            db.flush()
+
+            for ing_found in extraction.ingredients_found:
+                slug = ing_found.name.lower().replace(" ", "-")
+                ingredient_obj = db.query(Ingredient).filter(Ingredient.slug == slug).first()
+                if not ingredient_obj:
+                    ingredient_obj = Ingredient(
+                        canonical_name=ing_found.name,
+                        slug=slug,
+                        evidence_count=0,
+                    )
+                    db.add(ingredient_obj)
+                    db.flush()
+
+                link = IngredientEvidence(
+                    ingredient_id=ingredient_obj.id,
+                    evidence_id=evidence.id,
+                    relevance=ing_found.relevance,
+                )
+                db.add(link)
+                ingredient_obj.evidence_count += 1
+
+            job.processed_count += 1
+            if flagged:
+                job.flagged_count += 1
+                typer.echo(f"  Flagged for review (confidence: {extraction.confidence_score:.2f})")
+            else:
+                typer.echo(f"  OK (risk: {extraction.risk_level}, confidence: {extraction.confidence_score:.2f})")
+
+            db.commit()
+
+        except Exception as e:
+            job.failed_count += 1
+            db.commit()
+            typer.echo(f"  FAILED: {e}", err=True)
+
+    job.status = "completed"
+    job.completed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.close()
+
+    typer.echo(f"\nDone! Processed: {job.processed_count}, Failed: {job.failed_count}, Flagged: {job.flagged_count}")
+
+
 if __name__ == "__main__":
     app()
