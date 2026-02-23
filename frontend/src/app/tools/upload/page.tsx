@@ -81,6 +81,14 @@ export default function UploadPage() {
         paste text directly from a paper. Papers will be processed through AI extraction.
       </p>
 
+      <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <p className="text-sm text-amber-800">
+          <strong>Note:</strong> File uploads and AI processing run locally via the Python CLI.
+          Use <code className="bg-amber-100 px-1 rounded">python -m pipeline.cli process file.ris</code> from
+          the <code className="bg-amber-100 px-1 rounded">backend/</code> directory to process papers.
+        </p>
+      </div>
+
       <div className="mb-6 p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg text-center">
         <input
           type="file"

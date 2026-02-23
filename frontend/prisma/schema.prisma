@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Ingredient {
+  id               Int      @id @default(autoincrement())
+  canonicalName    String   @unique @map("canonical_name") @db.VarChar(255)
+  slug             String   @unique @db.VarChar(255)
+  casNumber        String?  @map("cas_number") @db.VarChar(50)
+  eNumber          String?  @map("e_number") @db.VarChar(20)
+  category         String?  @db.VarChar(100)
+  description      String?
+  overallRiskLevel String?  @map("overall_risk_level") @db.VarChar(20)
+  evidenceCount    Int      @default(0) @map("evidence_count")
+
+  aliases       IngredientAlias[]
+  evidenceLinks IngredientEvidence[]
+
+  @@index([slug])
+  @@index([canonicalName])
+  @@map("ingredients")
+}
+
+model IngredientAlias {
+  id           Int     @id @default(autoincrement())
+  ingredientId Int     @map("ingredient_id")
+  aliasName    String  @map("alias_name") @db.VarChar(255)
+  language     String  @db.VarChar(10)
+  isPrimary    Boolean @default(false) @map("is_primary")
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([aliasName])
+  @@map("ingredient_aliases")
+}
+
+model Evidence {
+  id                   Int      @id @default(autoincrement())
+  title                String
+  abstractOriginal     String?  @map("abstract_original")
+  abstractEnglish      String?  @map("abstract_english")
+  authors              Json?
+  doi                  String?  @unique @db.VarChar(255)
+  journal              String?  @db.VarChar(500)
+  publicationYear      Int?     @map("publication_year")
+  originalLanguage     String?  @map("original_language") @db.VarChar(10)
+  sourceDatabase       String?  @map("source_database") @db.VarChar(50)
+  studyType            String?  @map("study_type") @db.VarChar(50)
+  findingsSummary      String?  @map("findings_summary")
+  riskLevel            String?  @map("risk_level") @db.VarChar(20)
+  riskDirection        String?  @map("risk_direction") @db.VarChar(20)
+  confidenceScore      Float?   @map("confidence_score")
+  conflictOfInterest   String?  @map("conflict_of_interest")
+  url                  String?  @db.VarChar(2000)
+  fullText             String?  @map("full_text")
+  plainLanguageSummary String?  @map("plain_language_summary")
+  needsReview          Boolean  @default(false) @map("needs_review")
+  risRaw               Json?    @map("ris_raw")
+  processingStatus     String   @default("pending") @map("processing_status") @db.VarChar(20)
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  ingredientLinks IngredientEvidence[]
+
+  @@index([doi])
+  @@map("evidence")
+}
+
+model IngredientEvidence {
+  id           Int    @id @default(autoincrement())
+  ingredientId Int    @map("ingredient_id")
+  evidenceId   Int    @map("evidence_id")
+  relevance    String @default("primary") @db.VarChar(20)
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  evidence   Evidence   @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@map("ingredient_evidence")
+}
+
+model ProcessingJob {
+  id                Int       @id @default(autoincrement())
+  filename          String    @db.VarChar(500)
+  status            String    @default("pending") @db.VarChar(20)
+  totalRecords      Int       @default(0) @map("total_records")
+  processedCount    Int       @default(0) @map("processed_count")
+  failedCount       Int       @default(0) @map("failed_count")
+  flaggedCount      Int       @default(0) @map("flagged_count")
+  resultIngredients Json?     @map("result_ingredients")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  completedAt       DateTime? @map("completed_at")
+
+  @@map("processing_jobs")
+}
