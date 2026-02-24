@@ -190,6 +190,17 @@ def _run_fetch_processing(job_id: int, ingredient: str, sources: list[str], max_
                 ris_raw=record.get("ris_raw"),
                 processing_status="processed",
             )
+
+            # Fetch full text
+            try:
+                from pipeline.fulltext_fetcher import fetch_fulltext
+                full_text = fetch_fulltext(record)
+                if full_text:
+                    evidence.full_text = full_text
+                    logger.info("Full text fetched for: %s (%d chars)", record.get("title", "")[:60], len(full_text))
+            except Exception:
+                logger.debug("Full-text fetch failed for: %s", record.get("title", "")[:60])
+
             db.add(evidence)
             db.flush()
 

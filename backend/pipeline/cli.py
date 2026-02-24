@@ -75,6 +75,7 @@ def process(
     filepath: Path = typer.Argument(help="Path to RIS file"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Parse only, don't call AI or save to DB"),
     limit: int = typer.Option(0, "--limit", help="Process only first N records (0 = all)"),
+    no_fulltext: bool = typer.Option(False, "--no-fulltext", help="Skip full-text fetching"),
 ):
     """Process a RIS file through the full pipeline: parse → AI extract → save to DB."""
     from sqlalchemy.orm import Session
@@ -139,12 +140,25 @@ def process(
                 risk_level=extraction.risk_level,
                 risk_direction=extraction.risk_direction,
                 confidence_score=extraction.confidence_score,
+                conflict_of_interest=extraction.conflict_of_interest,
+                plain_language_summary=extraction.plain_language_summary,
+                url=record.get("url") or (f"https://doi.org/{record['doi']}" if record.get("doi") else None),
                 needs_review=flagged,
                 ris_raw=record.get("ris_raw"),
                 processing_status="processed",
             )
             db.add(evidence)
             db.flush()
+
+            # Fetch full text if enabled
+            if not no_fulltext:
+                from pipeline.fulltext_fetcher import fetch_fulltext
+                full_text = fetch_fulltext(record)
+                if full_text:
+                    evidence.full_text = full_text
+                    typer.echo(f"  Full text fetched ({len(full_text):,} chars)")
+                else:
+                    typer.echo("  No full text available")
 
             # Link to ingredients
             for ing_found in extraction.ingredients_found:
@@ -200,6 +214,7 @@ def fetch(
     ),
     limit: int = typer.Option(50, "--limit", help="Max results per source"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Fetch and display only, don't process or save"),
+    no_fulltext: bool = typer.Option(False, "--no-fulltext", help="Skip full-text fetching"),
 ):
     """Fetch papers from academic APIs (PubMed, OpenAlex, Scopus)."""
     from app.routers.search import _fetch_records
@@ -285,12 +300,25 @@ def fetch(
                 risk_level=extraction.risk_level,
                 risk_direction=extraction.risk_direction,
                 confidence_score=extraction.confidence_score,
+                conflict_of_interest=extraction.conflict_of_interest,
+                plain_language_summary=extraction.plain_language_summary,
+                url=record.get("url") or (f"https://doi.org/{record['doi']}" if record.get("doi") else None),
                 needs_review=flagged,
                 ris_raw=record.get("ris_raw"),
                 processing_status="processed",
             )
             db.add(evidence)
             db.flush()
+
+            # Fetch full text if enabled
+            if not no_fulltext:
+                from pipeline.fulltext_fetcher import fetch_fulltext
+                full_text = fetch_fulltext(record)
+                if full_text:
+                    evidence.full_text = full_text
+                    typer.echo(f"  Full text fetched ({len(full_text):,} chars)")
+                else:
+                    typer.echo("  No full text available")
 
             for ing_found in extraction.ingredients_found:
                 slug = slugify(ing_found.name)

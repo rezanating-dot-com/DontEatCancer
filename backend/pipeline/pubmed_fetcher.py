@@ -226,6 +226,8 @@ class PubMedFetcher:
             "authors": authors,
             "doi": doi,
             "url": url,
+            "pmid": pmid or None,
+            "pmc_id": pmc_id,
             "journal": journal.strip() if journal else None,
             "year": year,
             "keywords": keywords,
