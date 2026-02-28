@@ -1,6 +1,7 @@
 """CLI tools for DontEatCancer data pipeline."""
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -10,6 +11,51 @@ import typer
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 app = typer.Typer(help="DontEatCancer data pipeline tools")
+
+
+def _normalize_name(name: str) -> str:
+    """Strip E-numbers, parenthetical info, and extra whitespace from an ingredient name."""
+    # Remove parenthetical suffixes like "(E 552)", "(E552)", "(INS 552)"
+    name = re.sub(r"\s*\((?:E\s*\d+|INS\s*\d+)[^)]*\)", "", name, flags=re.IGNORECASE)
+    return name.strip()
+
+
+def _find_or_create_ingredient(db, name: str):
+    """Find an existing ingredient by slug or alias, or create a new one."""
+    from app.models import Ingredient, IngredientAlias
+    from app.services.ingredient_service import slugify
+
+    normalized = _normalize_name(name)
+    slug = slugify(normalized)
+
+    # 1. Exact slug match on normalized name
+    ingredient = db.query(Ingredient).filter(Ingredient.slug == slug).first()
+    if ingredient:
+        return ingredient
+
+    # 2. Try case-insensitive canonical name match
+    ingredient = db.query(Ingredient).filter(
+        Ingredient.canonical_name.ilike(normalized)
+    ).first()
+    if ingredient:
+        return ingredient
+
+    # 3. Check aliases
+    alias = db.query(IngredientAlias).filter(
+        IngredientAlias.alias_name.ilike(normalized)
+    ).first()
+    if alias:
+        return db.query(Ingredient).filter(Ingredient.id == alias.ingredient_id).first()
+
+    # 4. No match — create new ingredient
+    ingredient = Ingredient(
+        canonical_name=normalized,
+        slug=slug,
+        evidence_count=0,
+    )
+    db.add(ingredient)
+    db.flush()
+    return ingredient
 
 
 @app.command()
@@ -81,8 +127,7 @@ def process(
     from sqlalchemy.orm import Session
 
     from app.database import SessionLocal
-    from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
-    from app.services.ingredient_service import slugify
+    from app.models import Evidence, IngredientEvidence, ProcessingJob
     from pipeline.ai_processor import process_paper, should_flag_for_review
     from pipeline.ris_parser import parse_ris_file
 
@@ -162,16 +207,7 @@ def process(
 
             # Link to ingredients
             for ing_found in extraction.ingredients_found:
-                slug = slugify(ing_found.name)
-                ingredient = db.query(Ingredient).filter(Ingredient.slug == slug).first()
-                if not ingredient:
-                    ingredient = Ingredient(
-                        canonical_name=ing_found.name,
-                        slug=slug,
-                        evidence_count=0,
-                    )
-                    db.add(ingredient)
-                    db.flush()
+                ingredient = _find_or_create_ingredient(db, ing_found.name)
 
                 link = IngredientEvidence(
                     ingredient_id=ingredient.id,
@@ -199,9 +235,13 @@ def process(
     job.status = "completed"
     job.completed_at = datetime.now(timezone.utc)
     db.commit()
+
+    processed = job.processed_count
+    failed = job.failed_count
+    flagged = job.flagged_count
     db.close()
 
-    typer.echo(f"\nDone! Processed: {job.processed_count}, Failed: {job.failed_count}, Flagged: {job.flagged_count}")
+    typer.echo(f"\nDone! Processed: {processed}, Failed: {failed}, Flagged: {flagged}")
 
 
 @app.command()
@@ -254,8 +294,7 @@ def fetch(
     from sqlalchemy.orm import Session
 
     from app.database import SessionLocal
-    from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
-    from app.services.ingredient_service import slugify
+    from app.models import Evidence, IngredientEvidence, ProcessingJob
     from pipeline.ai_processor import process_paper, should_flag_for_review
 
     db: Session = SessionLocal()
@@ -357,9 +396,13 @@ def fetch(
     job.status = "completed"
     job.completed_at = datetime.now(timezone.utc)
     db.commit()
+
+    processed = job.processed_count
+    failed = job.failed_count
+    flagged = job.flagged_count
     db.close()
 
-    typer.echo(f"\nDone! Processed: {job.processed_count}, Failed: {job.failed_count}, Flagged: {job.flagged_count}")
+    typer.echo(f"\nDone! Processed: {processed}, Failed: {failed}, Flagged: {flagged}")
 
 
 if __name__ == "__main__":
