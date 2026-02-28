@@ -31,3 +31,5 @@ Thumbs.db
 
 # Docker
 postgres_data/
+.vercel
+.env*.local
