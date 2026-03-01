@@ -294,7 +294,8 @@ def fetch(
     from sqlalchemy.orm import Session
 
     from app.database import SessionLocal
-    from app.models import Evidence, IngredientEvidence, ProcessingJob
+    from app.models import Evidence, Ingredient, IngredientEvidence, ProcessingJob
+    from app.services.ingredient_service import slugify
     from pipeline.ai_processor import process_paper, should_flag_for_review
 
     db: Session = SessionLocal()
