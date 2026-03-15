@@ -1,4 +1,4 @@
-"""AI processing pipeline using local Ollama model for paper extraction and classification."""
+"""AI processing pipeline using Ollama for paper extraction and classification."""
 
 import json
 
@@ -63,7 +63,7 @@ class PaperExtraction(BaseModel):
 
 
 def process_paper(record: dict) -> PaperExtraction:
-    """Process a single paper record through local Ollama and return structured extraction."""
+    """Process a single paper record through Ollama and return structured extraction."""
     client = OpenAI(
         api_key="ollama",
         base_url="http://localhost:11434/v1",
@@ -79,7 +79,7 @@ def process_paper(record: dict) -> PaperExtraction:
     )
 
     response = client.chat.completions.create(
-        model="qwen2.5:32b",
+        model="gemma3:27b",
         max_tokens=1500,
         response_format={"type": "json_object"},
         messages=[{"role": "user", "content": prompt}],

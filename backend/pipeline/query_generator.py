@@ -43,6 +43,34 @@ def _health_boolean(lang: str) -> str:
     return " OR ".join(f'"{t}"' for t in terms)
 
 
+def _get_translations_from_db(ingredient: str) -> dict[str, str]:
+    """Look up translations from ingredient_aliases table in the database."""
+    try:
+        from app.database import SessionLocal
+        from app.models import Ingredient, IngredientAlias
+
+        db = SessionLocal()
+        ing = db.query(Ingredient).filter(
+            Ingredient.canonical_name.ilike(ingredient)
+        ).first()
+        if not ing:
+            db.close()
+            return {}
+
+        aliases = db.query(IngredientAlias).filter(
+            IngredientAlias.ingredient_id == ing.id
+        ).all()
+        db.close()
+
+        translations = {}
+        for alias in aliases:
+            if alias.language and alias.language != "en":
+                translations[alias.language] = alias.alias_name
+        return translations
+    except Exception:
+        return {}
+
+
 def _translate_via_claude(ingredient: str) -> dict[str, str]:
     """Use Claude to translate an ingredient name into zh, ar, fr, de."""
     import anthropic
@@ -81,8 +109,10 @@ def generate_queries(ingredient: str, use_ai: bool = True) -> dict[str, str]:
     elif use_ai:
         translations = _translate_via_claude(ingredient)
     else:
-        # Fallback: English only
-        translations = {}
+        # Fallback: check DB aliases for translations
+        translations = _get_translations_from_db(ingredient)
+        if not translations:
+            translations = {}
 
     queries: dict[str, str] = {}
 

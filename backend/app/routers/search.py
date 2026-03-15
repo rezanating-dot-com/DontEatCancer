@@ -65,12 +65,16 @@ def generate_search_queries(ingredient: str, database: str = "ebsco"):
 
 
 def _fetch_records(ingredient: str, sources: list[str], max_per_source: int) -> list[dict]:
-    """Run fetchers for the given sources and return deduplicated records."""
+    """Run fetchers for the given sources and return deduplicated records.
+
+    Searches with both English and Chinese queries to capture Eastern research.
+    """
     from app.config import settings
     from pipeline.query_generator import generate_queries
 
     queries = generate_queries(ingredient, use_ai=False)
     english_query = queries.get("en", f'"{ingredient}" AND ("cancer" OR "health risk" OR "toxicity")')
+    chinese_query = queries.get("zh")
 
     all_records: list[dict] = []
 
@@ -84,6 +88,12 @@ def _fetch_records(ingredient: str, sources: list[str], max_per_source: int) -> 
                     email=settings.pubmed_email,
                 )
                 records = fetcher.search(english_query, max_results=max_per_source)
+
+                # Also search with Chinese query for Eastern research
+                if chinese_query:
+                    logger.info("Also searching PubMed with Chinese query: %s", chinese_query)
+                    zh_records = fetcher.search(chinese_query, max_results=max_per_source)
+                    records.extend(zh_records)
 
             elif source == "openalex":
                 from pipeline.openalex_fetcher import OpenAlexFetcher

@@ -3,9 +3,10 @@
 import { use, useEffect, useState } from "react";
 
 import EvidenceCard from "@/components/EvidenceCard";
+import IngredientOverview from "@/components/IngredientOverview";
 import RiskBadge from "@/components/RiskBadge";
 import { getIngredient, getIngredientEvidence } from "@/lib/api";
-import type { Evidence, IngredientDetail } from "@/lib/types";
+import type { Evidence, IngredientDetail, IngredientOverview as OverviewType } from "@/lib/types";
 
 export default function IngredientDetailPage({
   params,
@@ -15,6 +16,7 @@ export default function IngredientDetailPage({
   const { slug } = use(params);
   const [ingredient, setIngredient] = useState<IngredientDetail | null>(null);
   const [evidence, setEvidence] = useState<{ evidence: Evidence; relevance: string }[]>([]);
+  const [overview, setOverview] = useState<OverviewType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +27,15 @@ export default function IngredientDetailPage({
       .then(([ing, ev]) => {
         setIngredient(ing);
         setEvidence(ev);
+        // Parse overview from description field if it's JSON
+        if (ing.description) {
+          try {
+            const parsed = JSON.parse(ing.description);
+            if (parsed.what_it_is) setOverview(parsed);
+          } catch {
+            // Not JSON, ignore
+          }
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -53,10 +64,6 @@ export default function IngredientDetailPage({
           <RiskBadge level={ingredient.overall_risk_level} />
         </div>
 
-        {ingredient.description && (
-          <p className="mt-4 text-gray-600">{ingredient.description}</p>
-        )}
-
         {ingredient.aliases.length > 0 && (
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Names in other languages</h3>
@@ -74,6 +81,8 @@ export default function IngredientDetailPage({
           </div>
         )}
       </div>
+
+      <IngredientOverview slug={slug} initialOverview={overview} />
 
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
         Evidence ({evidence.length} papers)

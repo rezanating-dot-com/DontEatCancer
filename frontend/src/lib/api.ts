@@ -15,6 +15,7 @@ import type {
   Evidence,
   EvidenceDetail,
   IngredientDetail,
+  IngredientOverview,
   IngredientSummary,
   ProcessingJob,
   QueryResult,
@@ -50,6 +51,11 @@ export const getIngredientEvidence = (slug: string) =>
   fetchAPI<{ evidence: Evidence; relevance: string }[]>(
     `/api/v1/ingredients/${slug}/evidence`
   );
+
+export const generateOverview = (slug: string) =>
+  fetchAPI<IngredientOverview>(`/api/v1/ingredients/${slug}/generate-overview`, {
+    method: "POST",
+  });
 
 export const getCategories = () =>
   fetchAPI<string[]>("/api/v1/ingredients/categories");

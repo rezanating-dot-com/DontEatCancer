@@ -16,6 +16,15 @@ export interface Alias {
   is_primary: boolean;
 }
 
+export interface IngredientOverview {
+  what_it_is: string;
+  what_its_used_for: string;
+  common_foods: string[];
+  other_names: string[];
+  regulatory_status: string;
+  quick_safety_note: string;
+}
+
 export interface IngredientDetail extends IngredientSummary {
   description: string | null;
   aliases: Alias[];
